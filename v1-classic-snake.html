@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>贪吃蛇 v1.2</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0e17;
+            --bg2: #111827;
+            --fg: #e8ecf4;
+            --muted: #4b5563;
+            --accent: #10b981;
+            --accent-glow: rgba(16, 185, 129, 0.4);
+            --food: #f59e0b;
+            --danger: #ef4444;
+            --card: rgba(17, 24, 39, 0.7);
+            --border: rgba(75, 85, 99, 0.3);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--bg); color: var(--fg);
+            min-height: 100vh; overflow-x: hidden;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .bg-layer {
+            position: fixed; inset: 0; z-index: 0;
+            background:
+                radial-gradient(ellipse 600px 400px at 20% 30%, rgba(16,185,129,0.06), transparent),
+                radial-gradient(ellipse 500px 500px at 80% 70%, rgba(245,158,11,0.04), transparent),
+                radial-gradient(ellipse 800px 600px at 50% 50%, rgba(16,185,129,0.03), transparent);
+        }
+
+        .floating-orb {
+            position: fixed; border-radius: 50%; filter: blur(80px);
+            opacity: 0.15; animation: orbFloat 12s ease-in-out infinite; z-index: 0;
+        }
+        .floating-orb:nth-child(2) { width:300px; height:300px; background:var(--accent); top:10%; left:5%; }
+        .floating-orb:nth-child(3) { width:250px; height:250px; background:var(--food); bottom:15%; right:10%; animation-delay:-4s; animation-duration:15s; }
+        .floating-orb:nth-child(4) { width:200px; height:200px; background:#6366f1; top:60%; left:50%; animation-delay:-8s; animation-duration:18s; opacity:0.08; }
+
+        @keyframes orbFloat {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(30px, -20px) scale(1.05); }
+            50% { transform: translate(-20px, 30px) scale(0.95); }
+            75% { transform: translate(20px, 20px) scale(1.02); }
+        }
+
+        .main-layout { position: relative; z-index: 10; display: flex; align-items: flex-start; gap: 24px; }
+        .game-col { display: flex; flex-direction: column; align-items: center; gap: 14px; outline: none; }
+        .right-col { display: flex; flex-direction: column; gap: 16px; width: 280px; }
+
+        .difficulty-bar { display: flex; align-items: center; gap: 10px; width: 100%; max-width: 650px; padding: 0 4px; }
+        .difficulty-label { color: var(--muted); font-size: 13px; font-weight: 300; text-transform: uppercase; letter-spacing: 1px; white-space: nowrap; }
+        .difficulty-group { display: flex; gap: 6px; flex: 1; }
+        .diff-btn {
+            flex: 1; padding: 8px 0; border: 1px solid var(--border); border-radius: 10px;
+            background: var(--card); color: var(--muted); font-family: 'Space Grotesk', sans-serif;
+            font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.25s ease;
+            outline: none; backdrop-filter: blur(12px); text-align: center;
+        }
+        .diff-btn:hover { border-color: rgba(255,255,255,0.2); color: var(--fg); }
+        .diff-btn.active-easy { background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.4); color: #34d399; box-shadow: 0 0 16px rgba(16,185,129,0.15); }
+        .diff-btn.active-normal { background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.4); color: #fbbf24; box-shadow: 0 0 16px rgba(245,158,11,0.15); }
+        .diff-btn.active-hard { background: rgba(239,68,68,0.12); border-color: rgba(239,68,68,0.4); color: #f87171; box-shadow: 0 0 16px rgba(239,68,68,0.15); }
+        .diff-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+        .diff-info { font-size: 11px; font-weight: 300; opacity: 0.7; display: block; margin-top: 1px; }
+
+        .canvas-container {
+            position: relative; border-radius: 16px; overflow: hidden;
+            box-shadow: 0 0 0 1px var(--border), 0 0 40px rgba(16,185,129,0.08), 0 20px 60px rgba(0,0,0,0.5);
+            transition: box-shadow 0.4s ease;
+        }
+        .canvas-container.active { box-shadow: 0 0 0 1px rgba(16,185,129,0.3), 0 0 60px rgba(16,185,129,0.12), 0 20px 60px rgba(0,0,0,0.5); }
+        .canvas-container.dead { box-shadow: 0 0 0 1px rgba(239,68,68,0.4), 0 0 60px rgba(239,68,68,0.1), 0 20px 60px rgba(0,0,0,0.5); }
+        canvas { display: block; background: var(--bg2); }
+
+        .overlay {
+            position: absolute; inset: 0; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            background: rgba(10,14,23,0.88); backdrop-filter: blur(8px);
+            z-index: 20; transition: opacity 0.4s ease; border-radius: 16px;
+        }
+        .overlay.hidden { opacity: 0; pointer-events: none; }
+
+        .overlay-title { font-size: 42px; font-weight: 700; margin-bottom: 6px; letter-spacing: -1px; }
+        .overlay-title.accent { color: var(--accent); }
+        .overlay-title.danger { color: var(--danger); }
+        .overlay-title.pause { color: var(--fg); }
+        .overlay-subtitle { color: var(--muted); font-size: 15px; font-weight: 300; margin-bottom: 24px; letter-spacing: 0.5px; }
+        .overlay-hint { color: var(--muted); font-size: 13px; font-weight: 300; margin-bottom: 20px; }
+
+        .player-select { width: 100%; max-width: 340px; margin-bottom: 20px; }
+        .player-select-label { color: var(--muted); font-size: 12px; font-weight: 300; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; text-align: center; }
+        .name-input-row { display: flex; gap: 6px; margin-bottom: 10px; }
+        .name-input {
+            flex: 1; padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px;
+            background: rgba(255,255,255,0.05); color: var(--fg); font-family: 'Space Grotesk', sans-serif;
+            font-size: 15px; outline: none; transition: border-color 0.25s ease;
+        }
+        .name-input:focus { border-color: var(--accent); }
+        .name-input::placeholder { color: var(--muted); opacity: 0.5; }
+        .name-btn {
+            padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px;
+            background: var(--card); color: var(--muted); cursor: pointer;
+            font-size: 14px; transition: all 0.2s ease; outline: none; white-space: nowrap;
+        }
+        .name-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .name-btn.confirm { background: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.3); color: var(--accent); }
+        .saved-players-label { color: var(--muted); font-size: 11px; font-weight: 300; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+        .saved-players-list { display: flex; flex-wrap: wrap; gap: 6px; max-height: 120px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+        .saved-players-list::-webkit-scrollbar { width: 3px; }
+        .saved-players-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .saved-player-tag {
+            display: flex; align-items: center; gap: 4px; padding: 5px 10px;
+            border: 1px solid var(--border); border-radius: 8px; background: var(--card);
+            cursor: pointer; transition: all 0.2s ease; font-size: 13px; color: var(--fg);
+        }
+        .saved-player-tag:hover { border-color: var(--accent); background: rgba(16,185,129,0.08); }
+        .saved-player-tag.selected { border-color: var(--accent); background: rgba(16,185,129,0.12); color: var(--accent); }
+        .delete-player { font-size: 10px; color: var(--muted); cursor: pointer; padding: 2px; transition: color 0.2s; line-height: 1; }
+        .delete-player:hover { color: var(--danger); }
+        .no-saved { color: var(--muted); font-size: 12px; font-weight: 300; font-style: italic; }
+
+        .game-btn {
+            padding: 12px 36px; border: none; border-radius: 12px;
+            font-family: 'Space Grotesk', sans-serif; font-size: 15px; font-weight: 600;
+            letter-spacing: 0.5px; cursor: pointer; transition: all 0.25s ease; outline: none;
+        }
+        .game-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+        .game-btn.menu-focused { outline: 2px solid #fff; outline-offset: 2px; box-shadow: 0 0 24px var(--accent-glow), 0 0 8px rgba(255,255,255,0.25); transform: scale(1.05); z-index: 5; position: relative; }
+        .btn-primary { background: var(--accent); color: #0a0e17; box-shadow: 0 4px 20px var(--accent-glow); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 30px var(--accent-glow); filter: brightness(1.1); }
+        .btn-primary:active { transform: translateY(0); }
+        .btn-secondary { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+        .btn-secondary:hover { border-color: rgba(255,255,255,0.3); color: var(--fg); }
+        .btn-danger { background: transparent; border: 1px solid rgba(239,68,68,0.3); color: rgba(239,68,68,0.7); }
+        .btn-danger:hover { border-color: rgba(239,68,68,0.6); color: #f87171; background: rgba(239,68,68,0.08); }
+        .gameover-btns { display: flex; gap: 12px; margin-top: 4px; }
+        .pause-btns { display: flex; flex-direction: column; gap: 10px; align-items: center; }
+        .pause-btns .game-btn { min-width: 200px; }
+
+        .final-score-text { font-size: 18px; color: var(--muted); margin-bottom: 4px; }
+        .final-score-number { font-size: 56px; font-weight: 700; color: var(--accent); margin-bottom: 6px; }
+        .final-player { font-size: 15px; color: var(--muted); font-weight: 300; margin-bottom: 16px; }
+        .new-record { color: var(--food); font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 24px; animation: recordPulse 1s ease-in-out infinite; }
+        .new-record.hidden { display: none; }
+        @keyframes recordPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+        .score-panel { background: var(--card); backdrop-filter: blur(12px); border: 1px solid var(--border); border-radius: 16px; padding: 18px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); transition: border-color 0.3s ease; }
+        .score-panel:hover { border-color: rgba(75,85,99,0.5); }
+        .score-row { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; }
+        .score-row + .score-row { border-top: 1px solid var(--border); margin-top: 6px; padding-top: 12px; }
+        .score-row-left { display: flex; align-items: center; gap: 8px; }
+        .score-row-icon { font-size: 16px; }
+        .score-row-label { font-size: 12px; font-weight: 300; color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px; }
+        .score-row-value { font-size: 26px; font-weight: 700; }
+        .score-row-value.cur { color: var(--fg); transition: transform 0.15s ease; }
+        .score-row-value.cur.bump { transform: scale(1.3); }
+        .score-row-value.best { color: var(--food); }
+        .current-player-bar { display: flex; align-items: center; gap: 8px; padding: 7px 12px; background: rgba(16,185,129,0.06); border: 1px solid rgba(16,185,129,0.15); border-radius: 10px; margin-top: 10px; }
+        .current-player-icon { color: var(--accent); font-size: 13px; }
+        .current-player-name { color: var(--accent); font-size: 13px; font-weight: 600; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        .history-panel { background: var(--card); backdrop-filter: blur(12px); border: 1px solid var(--border); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; box-shadow: 0 8px 32px rgba(0,0,0,0.3); transition: border-color 0.3s ease; flex: 1; min-height: 0; }
+        .history-panel:hover { border-color: rgba(75,85,99,0.5); }
+        .history-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+        .history-header i { color: var(--food); font-size: 14px; }
+        .history-title { font-size: 14px; font-weight: 600; letter-spacing: 0.5px; }
+        .history-count { color: var(--muted); font-size: 11px; font-weight: 300; margin-left: auto; }
+        .history-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; max-height: 300px; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+        .history-list::-webkit-scrollbar { width: 4px; }
+        .history-list::-webkit-scrollbar-track { background: transparent; }
+        .history-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+        .history-item { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 8px; background: rgba(255,255,255,0.02); border: 1px solid transparent; transition: all 0.25s ease; animation: itemSlideIn 0.35s cubic-bezier(0.34,1.56,0.64,1) backwards; }
+        .history-item:hover { background: rgba(255,255,255,0.04); border-color: var(--border); }
+        .history-item.is-best { background: rgba(245,158,11,0.06); border-color: rgba(245,158,11,0.2); }
+        .item-rank { width: 20px; height: 20px; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; flex-shrink: 0; background: rgba(255,255,255,0.05); color: var(--muted); }
+        .history-item.is-best .item-rank { background: rgba(245,158,11,0.15); color: var(--food); }
+        .item-info { flex: 1; min-width: 0; }
+        .item-player { font-size: 11px; color: var(--accent); font-weight: 400; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .item-score { font-size: 16px; font-weight: 700; color: var(--fg); line-height: 1.2; flex-shrink: 0; }
+        .history-item.is-best .item-score { color: var(--food); }
+        .item-crown { color: var(--food); font-size: 10px; flex-shrink: 0; }
+        .item-crown.hidden { display: none; }
+        .history-empty { text-align: center; padding: 20px 0; color: var(--muted); font-size: 12px; font-weight: 300; }
+        .history-empty i { font-size: 24px; display: block; margin-bottom: 8px; opacity: 0.3; }
+        @keyframes itemSlideIn { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: translateX(0); } }
+
+        .controls-hint { display: flex; align-items: center; gap: 14px; color: var(--muted); font-size: 11px; font-weight: 300; }
+        .key-group { display: flex; align-items: center; gap: 4px; }
+        .key { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; background: var(--card); border: 1px solid var(--border); border-radius: 5px; font-size: 10px; color: var(--fg); backdrop-filter: blur(8px); }
+        .key i { font-size: 9px; }
+        .key.wide { width: auto; padding: 0 7px; font-size: 9px; }
+        .focus-hint { color: var(--muted); font-size: 11px; font-weight: 300; margin-top: -6px; opacity: 0.7; transition: opacity 0.3s ease; }
+        .focus-hint.hidden { opacity: 0; }
+
+        .mobile-controls { display: none; grid-template-columns: repeat(3, 52px); grid-template-rows: repeat(2, 52px); gap: 5px; margin-top: 6px; }
+        .mobile-btn { display: flex; align-items: center; justify-content: center; background: var(--card); border: 1px solid var(--border); border-radius: 10px; color: var(--fg); font-size: 18px; cursor: pointer; user-select: none; -webkit-user-select: none; touch-action: manipulation; transition: all 0.15s ease; }
+        .mobile-btn:active { background: var(--accent); color: var(--bg); transform: scale(0.92); }
+        .mobile-btn.empty { background: transparent; border: none; }
+        @media (max-width: 600px) { .mobile-controls { display: grid; } .controls-hint { display: none; } }
+
+        .snake-deco { display: flex; gap: 4px; margin-bottom: 18px; }
+        .snake-deco span { width: 12px; height: 12px; border-radius: 3px; animation: snakeWave 1.5s ease-in-out infinite; }
+        .snake-deco span:nth-child(1) { background: #10b981; animation-delay: 0s; position: relative; }
+        .snake-deco span:nth-child(1)::after {
+            content: '';
+            position: absolute;
+            width: 5px; height: 5px;
+            background: radial-gradient(circle at 2.5px 1.5px, #e8ecf4 1px, #0a0e17 1.1px);
+            border-radius: 50%;
+            top: 2px; left: 1px;
+        }
+        .snake-deco span:nth-child(2) { background: #0d9668; animation-delay: 0.1s; }
+        .snake-deco span:nth-child(3) { background: #0a7d56; animation-delay: 0.2s; }
+        .snake-deco span:nth-child(4) { background: #086444; animation-delay: 0.3s; }
+        .snake-deco span:nth-child(5) { background: #064b33; animation-delay: 0.4s; }
+        @keyframes snakeWave { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+
+        .toast { position: fixed; top: 24px; left: 50%; transform: translateX(-50%) translateY(-100px); background: var(--card); backdrop-filter: blur(12px); border: 1px solid var(--border); border-radius: 10px; padding: 10px 24px; color: var(--fg); font-size: 14px; z-index: 100; transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1); pointer-events: none; }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+
+        @media (max-width: 960px) { .main-layout { flex-direction: column; align-items: center; } .right-col { width: 100%; max-width: 650px; flex-direction: row; flex-wrap: wrap; } .score-panel { flex: 1; min-width: 200px; } .history-panel { flex: 2; min-width: 300px; } .history-list { max-height: 160px; } }
+        @media (prefers-reduced-motion: reduce) { .floating-orb, .snake-deco span { animation: none; } .canvas-container, .game-btn, .history-item, .diff-btn { transition: none; animation: none; } }
+    </style>
+</head>
+<body>
+    <div class="bg-layer"></div>
+    <div class="floating-orb"></div>
+    <div class="floating-orb"></div>
+    <div class="floating-orb"></div>
+    <div class="toast" id="toast"></div>
+
+    <div class="main-layout">
+        <div class="game-col" id="gameWrapper" tabindex="0">
+            <div class="difficulty-bar">
+                <span class="difficulty-label">难度</span>
+                <div class="difficulty-group">
+                    <button class="diff-btn" data-diff="easy">简单<span class="diff-info">1分/食物</span></button>
+                    <button class="diff-btn active-normal" data-diff="normal">普通<span class="diff-info">2分/食物</span></button>
+                    <button class="diff-btn" data-diff="hard">困难<span class="diff-info">3分/食物</span></button>
+                </div>
+            </div>
+
+            <div class="canvas-container" id="canvasContainer">
+                <canvas id="gameCanvas"></canvas>
+
+                <!-- 开始画面 -->
+                <div class="overlay" id="startOverlay">
+                    <div class="snake-deco"><span></span><span></span><span></span><span></span><span></span></div>
+                    <div class="overlay-title accent">贪吃蛇</div>
+                    <div class="overlay-subtitle">吞噬一切，不断进化</div>
+                    <div class="player-select">
+                        <div class="player-select-label">选择玩家</div>
+                        <div class="name-input-row">
+                            <input type="text" class="name-input" id="playerNameInput" placeholder="输入玩家名称" maxlength="12" autocomplete="off">
+                            <button class="name-btn" id="randomNameBtn" title="随机名称"><i class="fas fa-dice"></i></button>
+                            <button class="name-btn confirm" id="confirmNameBtn" title="确认">OK</button>
+                        </div>
+                        <div class="saved-players-label">已记录玩家</div>
+                        <div class="saved-players-list" id="savedPlayersList"><span class="no-saved">暂无记录</span></div>
+                    </div>
+                    <button class="game-btn btn-primary" id="startBtn">开始游戏</button>
+                </div>
+
+                <!-- 暂停画面 -->
+                <div class="overlay hidden" id="pauseOverlay">
+                    <div class="overlay-title pause">已暂停</div>
+                    <div class="overlay-hint">可点击上方按钮切换难度</div>
+                    <div class="pause-btns">
+                        <button class="game-btn btn-primary" id="resumeBtn">继续游戏</button>
+                        <button class="game-btn btn-danger" id="quitBtn">退出结算</button>
+                    </div>
+                </div>
+
+                <!-- 结束画面 -->
+                <div class="overlay hidden" id="gameOverOverlay">
+                    <div class="overlay-title danger">游戏结束</div>
+                    <div class="final-score-text">最终得分</div>
+                    <div class="final-score-number" id="finalScore">0</div>
+                    <div class="final-player" id="finalPlayer"></div>
+                    <div class="new-record hidden" id="newRecord">新纪录</div>
+                    <div class="gameover-btns">
+                        <button class="game-btn btn-secondary" id="exitBtn">退出</button>
+                        <button class="game-btn btn-primary" id="restartBtn">再来一局</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="focus-hint" id="focusHint">点击游戏区域以激活键盘控制</div>
+            <div class="controls-hint">
+                <div class="key-group"><span class="key"><i class="fas fa-arrow-up"></i></span><span class="key"><i class="fas fa-arrow-down"></i></span><span class="key"><i class="fas fa-arrow-left"></i></span><span class="key"><i class="fas fa-arrow-right"></i></span><span style="margin-left:3px">移动</span></div>
+                <div class="key-group"><span class="key wide">Space</span><span>暂停</span></div>
+                <div class="key-group"><span class="key">1</span><span class="key">2</span><span class="key">3</span><span>难度</span></div>
+            </div>
+            <div class="mobile-controls">
+                <div class="mobile-btn empty"></div><div class="mobile-btn" data-dir="up"><i class="fas fa-chevron-up"></i></div><div class="mobile-btn empty"></div>
+                <div class="mobile-btn" data-dir="left"><i class="fas fa-chevron-left"></i></div><div class="mobile-btn" data-dir="down"><i class="fas fa-chevron-down"></i></div><div class="mobile-btn" data-dir="right"><i class="fas fa-chevron-right"></i></div>
+            </div>
+        </div>
+
+        <div class="right-col">
+            <div class="score-panel">
+                <div class="score-row">
+                    <div class="score-row-left"><i class="fas fa-bolt score-row-icon" style="color:var(--accent)"></i><div class="score-row-label">得分</div></div>
+                    <div class="score-row-value cur" id="scoreValue">0</div>
+                </div>
+                <div class="score-row">
+                    <div class="score-row-left"><i class="fas fa-crown score-row-icon" style="color:var(--food)"></i><div class="score-row-label">最高</div></div>
+                    <div class="score-row-value best" id="bestValue">0</div>
+                </div>
+                <div class="current-player-bar">
+                    <i class="fas fa-user current-player-icon"></i>
+                    <span class="current-player-name" id="currentPlayerName">等待选择玩家...</span>
+                </div>
+            </div>
+            <div class="history-panel">
+                <div class="history-header"><i class="fas fa-trophy"></i><span class="history-title">排行榜</span><span class="history-count" id="historyCount">0 局</span></div>
+                <div class="history-list" id="historyList"><div class="history-empty"><i class="fas fa-ghost"></i>还没有记录</div></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    (() => {
+        const GRID = 25, CELL = 26, SIZE = GRID * CELL;
+        const DIFF = {
+            easy:   { base: 280, min: 150, step: 2, pts: 1, label: '简单' },
+            normal: { base: 220, min: 110, step: 2, pts: 2, label: '普通' },
+            hard:   { base: 140, min: 70,  step: 3, pts: 3, label: '困难' }
+        };
+        const RANDOM_NAMES = [
+            '疾风蛇王','暗影猎手','星辰吞噬者','毒牙领主','鳞甲战神',
+            '翠蛇行者','深渊蟒王','幽林蛇影','赤焰蛇尊','冰霜蛇灵',
+            '雷蛇风暴','碧鳞游侠','玄蛇隐者','紫蟒仙人','苍蛇剑客',
+            '金蛇狂舞','银环侠盗','墨蛇书生','青蛇医圣','白蛇仙子',
+            '火蛇战魂','风蛇行者','夜蛇刺客','光蛇守护','影蛇术士'
+        ];
+
+        const $ = id => document.getElementById(id);
+        const canvas = $('gameCanvas'), ctx = canvas.getContext('2d');
+        const container = $('canvasContainer');
+        const startOv = $('startOverlay'), pauseOv = $('pauseOverlay'), overOv = $('gameOverOverlay');
+        const startBtn = $('startBtn'), restartBtn = $('restartBtn'), exitBtn = $('exitBtn');
+        const resumeBtn = $('resumeBtn'), quitBtn = $('quitBtn');
+        const scoreEl = $('scoreValue'), bestEl = $('bestValue');
+        const finalEl = $('finalScore'), finalPlayer = $('finalPlayer'), newRec = $('newRecord');
+        const toastEl = $('toast'), wrapper = $('gameWrapper'), focusH = $('focusHint');
+        const hList = $('historyList'), hCount = $('historyCount');
+        const dBtns = document.querySelectorAll('.diff-btn');
+        const nameInput = $('playerNameInput'), randomNameBtn = $('randomNameBtn');
+        const confirmNameBtn = $('confirmNameBtn'), savedPlayersList = $('savedPlayersList');
+        const currentPlayerName = $('currentPlayerName');
+        canvas.width = SIZE; canvas.height = SIZE;
+
+        let snake = [], food = { x: 0, y: 0 }, dir = { x: 1, y: 0 }, nextDir = { x: 1, y: 0 };
+        let score = 0, best = 0, running = false, paused = false, loop = null, speed = 220;
+        let particles = [], fPulse = 0, curDiff = 'normal', eaten = 0;
+        let gameHistory = [], round = 0, playerName = '', selectedPlayer = '';
+        let savedPlayers = [], edgeCooldown = 0;
+        let pauseBtns = [], pauseFocusIdx = 0;
+        let gameOverBtns = [], gameOverFocusIdx = 0;
+
+        try { best = parseInt(localStorage.getItem('snakeBest3') || '0'); if (isNaN(best)) best = 0; } catch (e) { best = 0; }
+        try { const s = localStorage.getItem('snakeHistory3'); if (s) { gameHistory = JSON.parse(s); if (!Array.isArray(gameHistory)) gameHistory = []; } const r = localStorage.getItem('snakeRound3'); if (r) round = parseInt(r) || 0; } catch (e) { gameHistory = []; round = 0; }
+        try { const p = localStorage.getItem('snakePlayers'); if (p) { savedPlayers = JSON.parse(p); if (!Array.isArray(savedPlayers)) savedPlayers = []; } } catch (e) { savedPlayers = []; }
+        bestEl.textContent = best;
+        if (gameHistory.length) renderH();
+        renderSavedPlayers();
+
+        wrapper.addEventListener('click', () => wrapper.focus());
+        container.addEventListener('click', () => wrapper.focus());
+        wrapper.addEventListener('focus', () => focusH.classList.add('hidden'));
+        wrapper.addEventListener('blur', () => { if (running && !paused) focusH.classList.remove('hidden'); });
+
+        function showT(m) { toastEl.textContent = m; toastEl.classList.add('show'); setTimeout(() => toastEl.classList.remove('show'), 2000); }
+        function onSnake(p) { return snake.some(s => s.x === p.x && s.y === p.y); }
+
+        // 边缘食物控制
+        function isEdge(x, y) { return x === 0 || x === GRID - 1 || y === 0 || y === GRID - 1; }
+        function spawn() {
+            if (edgeCooldown > 0) {
+                let pos, a = 0;
+                do { pos = { x: 1 + Math.floor(Math.random() * (GRID - 2)), y: 1 + Math.floor(Math.random() * (GRID - 2)) }; a++; } while (onSnake(pos) && a < 500);
+                if (onSnake(pos)) { do { pos = { x: Math.floor(Math.random() * GRID), y: Math.floor(Math.random() * GRID) }; a++; } while (onSnake(pos) && a < 1000); }
+                food = pos; edgeCooldown--;
+            } else {
+                let pos, a = 0;
+                do { pos = { x: Math.floor(Math.random() * GRID), y: Math.floor(Math.random() * GRID) }; a++; } while (onSnake(pos) && a < 1000);
+                food = pos;
+                if (isEdge(food.x, food.y)) edgeCooldown = 4;
+            }
+        }
+
+        // 玩家名称
+        function getRandomName() { return RANDOM_NAMES[Math.floor(Math.random() * RANDOM_NAMES.length)]; }
+        function savePlayers() { try { localStorage.setItem('snakePlayers', JSON.stringify(savedPlayers)); } catch (e) {} }
+        function addPlayer(name) { if (!name || !name.trim()) return; name = name.trim(); if (!savedPlayers.includes(name)) { savedPlayers.push(name); savePlayers(); renderSavedPlayers(); } }
+        function removePlayer(name) { savedPlayers = savedPlayers.filter(p => p !== name); savePlayers(); renderSavedPlayers(); if (selectedPlayer === name) { selectedPlayer = ''; nameInput.value = ''; } }
+        function selectPlayer(name) { selectedPlayer = name; nameInput.value = name; renderSavedPlayers(); }
+        function renderSavedPlayers() {
+            savedPlayersList.innerHTML = '';
+            if (!savedPlayers.length) { savedPlayersList.innerHTML = '<span class="no-saved">暂无记录</span>'; return; }
+            savedPlayers.forEach(name => {
+                const tag = document.createElement('div');
+                tag.className = 'saved-player-tag' + (selectedPlayer === name ? ' selected' : '');
+                tag.innerHTML = `<span>${name}</span><span class="delete-player" data-name="${name}" title="删除"><i class="fas fa-times"></i></span>`;
+                tag.addEventListener('click', e => { if (e.target.closest('.delete-player')) { e.stopPropagation(); removePlayer(e.target.closest('.delete-player').dataset.name); return; } selectPlayer(name); });
+                savedPlayersList.appendChild(tag);
+            });
+        }
+        nameInput.value = getRandomName();
+        randomNameBtn.addEventListener('click', () => { nameInput.value = getRandomName(); selectedPlayer = ''; renderSavedPlayers(); nameInput.focus(); });
+        confirmNameBtn.addEventListener('click', () => { const n = nameInput.value.trim(); if (n) { addPlayer(n); selectedPlayer = n; renderSavedPlayers(); showT('已确认玩家：' + n); } });
+        nameInput.addEventListener('mousedown', e => e.stopPropagation());
+        nameInput.addEventListener('click', e => e.stopPropagation());
+        nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); startGame(); } e.stopPropagation(); });
+        nameInput.addEventListener('keyup', e => e.stopPropagation());
+
+        // 难度
+        function setDiff(d, autoP) {
+            const prev = curDiff; curDiff = d;
+            dBtns.forEach(b => { b.classList.remove('active-easy', 'active-normal', 'active-hard'); if (b.dataset.diff === d) b.classList.add('active-' + d); });
+            if (running && !paused && autoP) toggleP();
+            if (running) { const c = DIFF[d]; speed = Math.max(c.min, c.base - eaten * c.step); if (!paused) { clearInterval(loop); loop = setInterval(step, speed); } }
+            if (prev !== d) { const c = DIFF[d]; showT('难度：' + c.label + '（' + c.pts + '分/食物）'); }
+        }
+        dBtns.forEach(b => b.addEventListener('click', e => { e.stopPropagation(); setDiff(b.dataset.diff, true); wrapper.focus(); }));
+
+        // 排行榜
+        function renderH() {
+            hList.innerHTML = '';
+            if (!gameHistory.length) { hList.innerHTML = '<div class="history-empty"><i class="fas fa-ghost"></i>还没有记录</div>'; hCount.textContent = '0 局'; return; }
+            const playerBest = {};
+            gameHistory.forEach(e => { if (!playerBest[e.player] || e.score > playerBest[e.player].score) playerBest[e.player] = { player: e.player, score: e.score }; });
+            const sorted = Object.values(playerBest).sort((a, b) => b.score - a.score);
+            const hi = sorted.length ? sorted[0].score : 0;
+            sorted.forEach((e, i) => {
+                const isB = e.score === hi && e.score > 0; const rank = i + 1;
+                const el = document.createElement('div');
+                el.className = 'history-item' + (isB ? ' is-best' : '');
+                el.style.animationDelay = i * 0.03 + 's';
+                el.innerHTML = `<div class="item-rank">${rank}</div><div class="item-info"><div class="item-player">${e.player || '未命名'}</div></div><div class="item-score">${e.score}</div><i class="fas fa-crown item-crown ${isB ? '' : 'hidden'}"></i>`;
+                hList.appendChild(el);
+            });
+            hCount.textContent = gameHistory.length + ' 局';
+        }
+        function addH(s, p) { round++; gameHistory.push({ round, score: s, player: p, time: Date.now() }); if (gameHistory.length > 50) gameHistory = gameHistory.slice(-50); try { localStorage.setItem('snakeHistory3', JSON.stringify(gameHistory)); localStorage.setItem('snakeRound3', round.toString()); } catch (e) {} renderH(); }
+
+        // 粒子
+        function mkP(x, y, c, n) { for (let i = 0; i < n; i++) { const a = Math.PI * 2 * i / n + Math.random() * 0.5, s = 1.5 + Math.random() * 3; particles.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 1, dec: 0.02 + Math.random() * 0.03, sz: 2 + Math.random() * 3, c }); } }
+        function upP() { for (let i = particles.length - 1; i >= 0; i--) { const p = particles[i]; p.x += p.vx; p.y += p.vy; p.vx *= 0.96; p.vy *= 0.96; p.life -= p.dec; if (p.life <= 0) particles.splice(i, 1); } }
+        function drP() { particles.forEach(p => { ctx.save(); ctx.globalAlpha = p.life; ctx.fillStyle = p.c; ctx.shadowColor = p.c; ctx.shadowBlur = 8; ctx.beginPath(); ctx.arc(p.x, p.y, Math.max(0.5, p.sz * p.life), 0, Math.PI * 2); ctx.fill(); ctx.restore(); }); }
+
+        // 渲染
+        function drGrid() { ctx.strokeStyle = 'rgba(75,85,99,0.08)'; ctx.lineWidth = 0.5; for (let i = 0; i <= GRID; i++) { const p = i * CELL; ctx.beginPath(); ctx.moveTo(p, 0); ctx.lineTo(p, SIZE); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0, p); ctx.lineTo(SIZE, p); ctx.stroke(); } }
+        function drSnake() {
+            const len = snake.length;
+            snake.forEach((s, i) => {
+                const r = i / Math.max(1, len - 1), x = s.x * CELL, y = s.y * CELL;
+                const pad = i === 0 ? 1 : 2, rad = i === 0 ? 6 : 4;
+                const cr = Math.round(16 + (6 - 16) * r), cg = Math.round(185 + (75 - 185) * r), cb = Math.round(129 + (51 - 129) * r);
+                ctx.save();
+                if (i === 0) { ctx.shadowColor = 'rgba(16,185,129,0.6)'; ctx.shadowBlur = 12; }
+                ctx.fillStyle = `rgb(${cr},${cg},${cb})`;
+                const cx = x + pad, cy = y + pad, cw = CELL - pad * 2, ch = CELL - pad * 2;
+                ctx.beginPath(); ctx.moveTo(cx + rad, cy); ctx.lineTo(cx + cw - rad, cy); ctx.quadraticCurveTo(cx + cw, cy, cx + cw, cy + rad); ctx.lineTo(cx + cw, cy + ch - rad); ctx.quadraticCurveTo(cx + cw, cy + ch, cx + cw - rad, cy + ch); ctx.lineTo(cx + rad, cy + ch); ctx.quadraticCurveTo(cx, cy + ch, cx, cy + ch - rad); ctx.lineTo(cx, cy + rad); ctx.quadraticCurveTo(cx, cy, cx + rad, cy); ctx.closePath(); ctx.fill();
+                if (i === 0) {
+                    ctx.shadowBlur = 0; ctx.fillStyle = '#0a0e17';
+                    const cX = x + CELL / 2, cY = y + CELL / 2; let e1x, e1y, e2x, e2y;
+                    if (dir.x === 1) { e1x = cX + 4; e1y = cY - 5; e2x = cX + 4; e2y = cY + 5; }
+                    else if (dir.x === -1) { e1x = cX - 4; e1y = cY - 5; e2x = cX - 4; e2y = cY + 5; }
+                    else if (dir.y === -1) { e1x = cX - 5; e1y = cY - 4; e2x = cX + 5; e2y = cY - 4; }
+                    else { e1x = cX - 5; e1y = cY + 4; e2x = cX + 5; e2y = cY + 4; }
+                    ctx.beginPath(); ctx.arc(e1x, e1y, 3, 0, Math.PI * 2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(e2x, e2y, 3, 0, Math.PI * 2); ctx.fill();
+                    ctx.fillStyle = '#e8ecf4';
+                    ctx.beginPath(); ctx.arc(e1x + 1, e1y - 1, 1.2, 0, Math.PI * 2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(e2x + 1, e2y - 1, 1.2, 0, Math.PI * 2); ctx.fill();
+                }
+                ctx.restore();
+            });
+        }
+        function drFood() {
+            fPulse += 0.06; const x = food.x * CELL + CELL / 2, y = food.y * CELL + CELL / 2;
+            const bR = CELL / 2 - 4, pR = bR + Math.sin(fPulse) * 2;
+            ctx.save();
+            const gg = ctx.createRadialGradient(x, y, 0, x, y, CELL); gg.addColorStop(0, 'rgba(245,158,11,0.25)'); gg.addColorStop(1, 'rgba(245,158,11,0)'); ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(x, y, CELL, 0, Math.PI * 2); ctx.fill();
+            ctx.shadowColor = 'rgba(245,158,11,0.8)'; ctx.shadowBlur = 15;
+            const fg = ctx.createRadialGradient(x - 2, y - 2, 0, x, y, pR); fg.addColorStop(0, '#fbbf24'); fg.addColorStop(1, '#f59e0b'); ctx.fillStyle = fg; ctx.beginPath(); ctx.arc(x, y, Math.max(1, pR), 0, Math.PI * 2); ctx.fill();
+            ctx.shadowBlur = 0; ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.beginPath(); ctx.arc(x - 2, y - 2, Math.max(0.5, pR * 0.35), 0, Math.PI * 2); ctx.fill();
+            ctx.restore();
+        }
+        function drDiffInfo() { const c = DIFF[curDiff], col = { easy: '#34d399', normal: '#fbbf24', hard: '#f87171' }; ctx.save(); ctx.font = '600 12px "Space Grotesk"'; ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = col[curDiff]; ctx.globalAlpha = 0.6; ctx.fillText(c.label + ' ' + c.pts + 'x', 8, 8); ctx.restore(); }
+
+        function render() {
+            ctx.fillStyle = '#111827'; ctx.fillRect(0, 0, SIZE, SIZE); drGrid();
+            if (running || particles.length > 0) {
+                if (running) { drFood(); drDiffInfo(); }
+                drSnake(); drP(); upP();
+            }
+            requestAnimationFrame(render);
+        }
+
+        // 游戏逻辑
+        function init() {
+            const sx = Math.floor(GRID / 4), sy = Math.floor(GRID / 2);
+            snake = [{ x: sx, y: sy }, { x: sx - 1, y: sy }, { x: sx - 2, y: sy }];
+            dir = { x: 1, y: 0 }; nextDir = { x: 1, y: 0 };
+            score = 0; eaten = 0; particles = []; fPulse = 0; edgeCooldown = 0;
+            scoreEl.textContent = '0'; speed = DIFF[curDiff].base; spawn();
+        }
+
+        function step() {
+            if (!running || paused) return;
+            dir = { ...nextDir };
+            const h = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
+            if (h.x < 0 || h.x >= GRID || h.y < 0 || h.y >= GRID) { gameOver(); return; }
+            if (onSnake(h)) { gameOver(); return; }
+            snake.unshift(h);
+            if (h.x === food.x && h.y === food.y) {
+                const c = DIFF[curDiff]; score += c.pts; eaten++;
+                scoreEl.textContent = score; scoreEl.classList.add('bump');
+                setTimeout(() => scoreEl.classList.remove('bump'), 150);
+                mkP(food.x * CELL + CELL / 2, food.y * CELL + CELL / 2, '#f59e0b', 12);
+                mkP(food.x * CELL + CELL / 2, food.y * CELL + CELL / 2, '#fbbf24', 8);
+                speed = Math.max(c.min, c.base - eaten * c.step);
+                clearInterval(loop); loop = setInterval(step, speed); spawn();
+            } else { snake.pop(); }
+        }
+
+        // 结算（通用：死亡或退出都会调用）
+        function finishGame(showDeathFx) {
+            running = false; clearInterval(loop);
+            container.classList.remove('active'); container.classList.add('dead');
+            if (showDeathFx) {
+                mkP(snake[0].x * CELL + CELL / 2, snake[0].y * CELL + CELL / 2, '#ef4444', 20);
+                mkP(snake[0].x * CELL + CELL / 2, snake[0].y * CELL + CELL / 2, '#f87171', 10);
+            }
+            addH(score, playerName);
+            let isNew = false;
+            if (score > best) { best = score; try { localStorage.setItem('snakeBest3', best.toString()); } catch (e) {} bestEl.textContent = best; isNew = true; }
+            setTimeout(() => {
+                finalEl.textContent = score; finalPlayer.textContent = '玩家：' + playerName;
+                if (isNew && score > 0) newRec.classList.remove('hidden'); else newRec.classList.add('hidden');
+                overOv.classList.remove('hidden');
+                gameOverBtns = [exitBtn, restartBtn];
+                gameOverFocusIdx = 0;
+                updateGameOverFocus();
+            }, showDeathFx ? 600 : 200);
+        }
+
+        function gameOver() { finishGame(true); }
+
+        function quitGame() {
+            // 退出结算：不播放死亡特效，按当前分数结算
+            paused = false;
+            pauseOv.classList.add('hidden');
+            finishGame(false);
+        }
+
+        function startGame() {
+            const n = nameInput.value.trim();
+            playerName = n || getRandomName(); nameInput.value = playerName;
+            addPlayer(playerName); selectedPlayer = playerName; renderSavedPlayers();
+            currentPlayerName.textContent = playerName;
+            init(); startOv.classList.add('hidden'); overOv.classList.add('hidden'); pauseOv.classList.add('hidden');
+            container.classList.remove('dead'); container.classList.add('active');
+            running = true; paused = false; focusH.classList.add('hidden');
+            loop = setInterval(step, speed); wrapper.focus();
+        }
+
+        function exitToStart() {
+            running = false; paused = false; clearInterval(loop);
+            gameOverBtns.forEach(b => b.classList.remove('menu-focused'));
+            container.classList.remove('active', 'dead');
+            overOv.classList.add('hidden'); pauseOv.classList.add('hidden');
+            startOv.classList.remove('hidden');
+            scoreEl.textContent = '0';
+            nameInput.value = playerName || getRandomName(); selectedPlayer = playerName; renderSavedPlayers();
+        }
+
+        function updatePauseFocus() {
+            pauseBtns.forEach((btn, i) => {
+                if (i === pauseFocusIdx) btn.classList.add('menu-focused');
+                else btn.classList.remove('menu-focused');
+            });
+        }
+
+        function updateGameOverFocus() {
+            gameOverBtns.forEach((btn, i) => {
+                if (i === gameOverFocusIdx) btn.classList.add('menu-focused');
+                else btn.classList.remove('menu-focused');
+            });
+        }
+
+        function toggleP() {
+            if (!running) return;
+            paused = !paused;
+            if (paused) {
+                clearInterval(loop);
+                pauseOv.classList.remove('hidden');
+                pauseBtns = [resumeBtn, quitBtn];
+                pauseFocusIdx = 0;
+                updatePauseFocus();
+            } else {
+                pauseBtns.forEach(b => b.classList.remove('menu-focused'));
+                pauseOv.classList.add('hidden');
+                loop = setInterval(step, speed);
+                showT('继续游戏');
+            }
+        }
+
+        function hDir(d) {
+            if (!running || paused) return;
+            const opp = { up: 'down', down: 'up', left: 'right', right: 'left' };
+            const dm = { up: { x: 0, y: -1 }, down: { x: 0, y: 1 }, left: { x: -1, y: 0 }, right: { x: 1, y: 0 } };
+            const n = dm[d]; if (!n) return;
+            const cur = Object.keys(dm).find(k => dm[k].x === dir.x && dm[k].y === dir.y);
+            if (opp[d] === cur) return; nextDir = { ...n };
+        }
+
+        function hKey(e) {
+            if (document.activeElement === nameInput && e.key !== 'Enter') return;
+            const dm = { 'ArrowUp': 'up', 'ArrowDown': 'down', 'ArrowLeft': 'left', 'ArrowRight': 'right', 'w': 'up', 's': 'down', 'a': 'left', 'd': 'right', 'W': 'up', 'S': 'down', 'A': 'left', 'D': 'right' };
+            if (e.key === ' ') { e.preventDefault(); if (running) toggleP(); else if (!startOv.classList.contains('hidden')) startGame(); return; }
+            if (e.key === '1') { setDiff('easy', true); return; }
+            if (e.key === '2') { setDiff('normal', true); return; }
+            if (e.key === '3') { setDiff('hard', true); return; }
+            // 暂停菜单导航
+            if (paused) {
+                if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    pauseFocusIdx = (pauseFocusIdx + (e.key === 'ArrowUp' ? -1 : 1) + pauseBtns.length) % pauseBtns.length;
+                    updatePauseFocus();
+                    return;
+                }
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    pauseBtns[pauseFocusIdx].click();
+                    return;
+                }
+            }
+            // 游戏结束菜单导航
+            if (!running && !overOv.classList.contains('hidden')) {
+                if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    gameOverFocusIdx = (gameOverFocusIdx + (e.key === 'ArrowLeft' ? -1 : 1) + gameOverBtns.length) % gameOverBtns.length;
+                    updateGameOverFocus();
+                    return;
+                }
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    gameOverBtns[gameOverFocusIdx].click();
+                    return;
+                }
+            }
+            if (dm[e.key]) { e.preventDefault(); hDir(dm[e.key]); return; }
+            if (e.key === 'p' || e.key === 'P') { if (running) toggleP(); }
+        }
+
+        wrapper.addEventListener('keydown', e => { hKey(e); e.stopPropagation(); });
+        document.addEventListener('keydown', hKey);
+        document.querySelectorAll('.mobile-btn[data-dir]').forEach(b => { b.addEventListener('touchstart', e => { e.preventDefault(); hDir(b.dataset.dir); }); b.addEventListener('click', () => hDir(b.dataset.dir)); });
+
+        startBtn.addEventListener('click', e => { e.stopPropagation(); startGame(); });
+        restartBtn.addEventListener('click', e => { e.stopPropagation(); startGame(); });
+        exitBtn.addEventListener('click', e => { e.stopPropagation(); exitToStart(); });
+        resumeBtn.addEventListener('click', e => { e.stopPropagation(); toggleP(); wrapper.focus(); });
+        quitBtn.addEventListener('click', e => { e.stopPropagation(); quitGame(); });
+
+        let tx = 0, ty = 0;
+        canvas.addEventListener('touchstart', e => { tx = e.touches[0].clientX; ty = e.touches[0].clientY; }, { passive: true });
+        canvas.addEventListener('touchend', e => {
+            const dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty;
+            if (Math.max(Math.abs(dx), Math.abs(dy)) < 20) return;
+            if (Math.abs(dx) > Math.abs(dy)) hDir(dx > 0 ? 'right' : 'left'); else hDir(dy > 0 ? 'down' : 'up');
+        }, { passive: true });
+
+        render();
+    })();
+    </script>
+</body>
+</html>
