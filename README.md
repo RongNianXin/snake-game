@@ -1,6 +1,6 @@
-# 🐍 贪吃蛇 (Snake Game) v2.0
+# 🐍 贪吃蛇 (Snake Game) v2.1
 
-> HTML5 Canvas 诗词汉字版贪吃蛇 —— 吃汉字、集诗句、通关水墨结算。支持多难度、玩家系统、排行榜与自动化跑测。
+> HTML5 Canvas 诗词汉字版贪吃蛇 —— 60 首诗词三大题材、独立词库可二创、A* 空间预测 AI 寻路、多步超频压测、死亡瞬间定格。支持多难度、玩家系统、排行榜与自动化跑测。
 
 <br>
 
@@ -65,7 +65,7 @@
 - **归位结算**：集齐 5 字后田字格自动按诗句顺序重排，蛇身定格
 - **水墨弹窗**：宣纸色通关弹窗 + 红色「詩」字印章 + 大字诗句展示，古风浓郁
 - **无缝换关**：通关后长蛇不断、分数累加，无缝切换下一首新诗
-- **自动化跑测**：内置 AI 寻路 + 倍速驱动 + 自动通关，支持 `?test=true` 或 `F8` 一键激活
+- **自动化跑测**：内置 Space-Aware A* 寻路 + 洪水填充空间预测 + 多步超频驱动 + 自动通关，支持 `?test=true` 或 `F8` 一键激活，稳定存活至 100+ 节
 
 <br>
 
@@ -87,10 +87,12 @@
 
 ```
 snake-game/
-├── word-snake.html        # v2.0 诗词汉字版（当前主力版本）
-├── v1-classic-snake.html  # v1.2 经典版（怀旧封存）
-├── CHANGELOG.md           # 版本变更日志
-└── README.md              # 本文件
+├── v2-word-snake.html       # v2.1 诗词汉字版（当前主力版本）
+├── poetry-data.js           # v2.1 独立词库（60 首三大题材，支持二创）
+├── POETRY_RULES.md          # v2.1 声韵规范（上仄下平、AI 模板、自检清单）
+├── v1-classic-snake.html    # v1.2 经典版（怀旧封存）
+├── CHANGELOG.md             # 版本变更日志
+└── README.md                # 本文件
 ```
 
 > 每个版本均为**单文件架构**，HTML + CSS + JS 全部内联，无需构建工具，浏览器直接打开即可运行。
@@ -105,8 +107,8 @@ git clone https://github.com/RongNianXin/snake-game.git
 
 # 浏览器打开 v2.0 诗词汉字版
 cd snake-game
-open word-snake.html       # macOS
-start word-snake.html      # Windows
+open v2-word-snake.html       # macOS
+start v2-word-snake.html      # Windows
 
 # 怀旧经典版
 open v1-classic-snake.html
@@ -122,6 +124,7 @@ open v1-classic-snake.html
 
 | 版本 | 日期 | 核心内容 |
 |------|------|------|
+| v2.1 | 2026-06-08 | 独立词库 60 首三大题材 / 题材选择器 / Space-Aware A* + 洪水填充寻路 / 尾巴碰撞修复 / 多步超频 / 死亡定格 / 单条删除 |
 | v2.0 | 2026-06-07 | 诗词汉字版：汉字食物、诗词收集、田字格、水墨结算、无缝换关、AI 跑测 |
 | v1.2 | 2026-06-07 | 玩家名称系统、菜单键盘导航、封面蛇眼、食物生成优化 |
 | v1.1 | 2026-06-07 | 难度选择系统、动态速度、键盘快捷键 |
@@ -143,8 +146,8 @@ MIT License — 自由使用、修改和分发。
 
 1. **网址小尾巴参数法（最常用）**
    在浏览器中访问游戏时，只需在网址（URL）末尾加上特定的测试参数：
-   * **正常游玩**：`http://.../word-snake.html`
-   * **开启跑测**：`http://.../word-snake.html?test=true` （自动激活 AI 寻路及 8 倍速超速驱动）
+   * **正常游玩**：`http://.../v2-word-snake.html`
+   * **开启跑测**：`http://.../v2-word-snake.html?test=true` （自动激活 AI 寻路及 8 倍速超速驱动）
 2. **键盘后门快捷键法**
    在游戏运行的任意过程中，按下键盘上的 **`F8`** 键，即可对测试状态进行【开启 / 关闭】的实时取反切换，屏幕会有 Toast 提示。
 

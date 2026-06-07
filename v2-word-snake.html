@@ -98,7 +98,7 @@
         .overlay-hint { color: var(--muted); font-size: 13px; font-weight: 300; margin-bottom: 20px; }
 
         .player-select { width: 100%; max-width: 340px; margin-bottom: 20px; }
-        .player-select-label { color: var(--muted); font-size: 12px; font-weight: 300; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; text-align: center; }
+        .player-select-label { color: rgba(255,255,255,0.65); font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; text-align: center; }
         .name-input-row { display: flex; gap: 6px; margin-bottom: 10px; }
         .name-input {
             flex: 1; padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px;
@@ -114,7 +114,7 @@
         }
         .name-btn:hover { border-color: var(--accent); color: var(--accent); }
         .name-btn.confirm { background: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.3); color: var(--accent); }
-        .saved-players-label { color: var(--muted); font-size: 11px; font-weight: 300; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+        .saved-players-label { color: rgba(255,255,255,0.55); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; }
         .saved-players-list { display: flex; flex-wrap: wrap; gap: 6px; max-height: 120px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
         .saved-players-list::-webkit-scrollbar { width: 3px; }
         .saved-players-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
@@ -143,8 +143,31 @@
         .btn-secondary:hover { border-color: rgba(255,255,255,0.3); color: var(--fg); }
         .btn-danger { background: transparent; border: 1px solid rgba(239,68,68,0.3); color: rgba(239,68,68,0.7); }
         .btn-danger:hover { border-color: rgba(239,68,68,0.6); color: #f87171; background: rgba(239,68,68,0.08); }
-        .gameover-btns { display: flex; gap: 12px; margin-top: 4px; }
         .pause-btns { display: flex; flex-direction: column; gap: 10px; align-items: center; }
+
+        .gameover-score-card {
+            background: var(--card); backdrop-filter: blur(12px);
+            border: 1px solid rgba(239,68,68,0.2); border-radius: 10px;
+            padding: 10px 14px; text-align: center;
+        }
+        .gameover-score-card.hidden { display: none; }
+        .gameover-bar-score { color: var(--danger); font-size: 20px; font-weight: 700; }
+
+        .gameover-actions {
+            display: flex; gap: 14px; justify-content: center;
+            animation: barSlideUp 0.4s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        @keyframes barSlideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        .gameover-actions.hidden { display: none; }
+        .gameover-action-btn {
+            background: transparent; border: 1.5px solid rgba(16,185,129,0.4);
+            color: var(--fg); padding: 10px 36px; font-size: 15px;
+            border-radius: 10px; letter-spacing: 1px;
+        }
+        .gameover-action-btn:hover { border-color: var(--accent); box-shadow: 0 0 20px rgba(16,185,129,0.15); }
+        .gameover-action-btn.primary { border-color: var(--accent); color: var(--accent); }
+        .gameover-action-btn.primary:hover { box-shadow: 0 0 24px var(--accent-glow); }
+        .gameover-action-btn.menu-focused { border-color: #fff; box-shadow: 0 0 24px var(--accent-glow), 0 0 8px rgba(255,255,255,0.25); transform: scale(1.05); }
         .pause-btns .game-btn { min-width: 200px; }
 
         .final-score-text { font-size: 18px; color: var(--muted); margin-bottom: 4px; }
@@ -175,6 +198,8 @@
         .history-header i { color: var(--food); font-size: 14px; }
         .history-title { font-size: 14px; font-weight: 600; letter-spacing: 0.5px; }
         .history-count { color: var(--muted); font-size: 11px; font-weight: 300; margin-left: auto; }
+        .history-clear-btn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 12px; padding: 2px 4px; transition: color 0.25s ease; }
+        .history-clear-btn:hover { color: var(--danger); }
         .history-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; max-height: 300px; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
         .history-list::-webkit-scrollbar { width: 4px; }
         .history-list::-webkit-scrollbar-track { background: transparent; }
@@ -190,6 +215,8 @@
         .history-item.is-best .item-score { color: var(--food); }
         .item-crown { color: var(--food); font-size: 10px; flex-shrink: 0; }
         .item-crown.hidden { display: none; }
+        .history-del { color: #ef4444; font-size: 18px; font-weight: 700; cursor: pointer; padding: 2px 6px; transition: all 0.2s; flex-shrink: 0; line-height: 1; opacity: 0.6; }
+        .history-del:hover { opacity: 1; transform: scale(1.2); }
         .history-empty { text-align: center; padding: 20px 0; color: var(--muted); font-size: 12px; font-weight: 300; }
         .history-empty i { font-size: 24px; display: block; margin-bottom: 8px; opacity: 0.3; }
         @keyframes itemSlideIn { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: translateX(0); } }
@@ -267,6 +294,22 @@
 
         .toast { position: fixed; top: 24px; left: 50%; transform: translateX(-50%) translateY(-100px); background: var(--card); backdrop-filter: blur(12px); border: 1px solid var(--border); border-radius: 10px; padding: 10px 24px; color: var(--fg); font-size: 14px; z-index: 100; transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1); pointer-events: none; }
         .toast.show { transform: translateX(-50%) translateY(0); }
+
+        /* ===== 2.1 题材选择器 ===== */
+        .category-select { width: 100%; max-width: 380px; margin-bottom: 16px; }
+        .category-label { color: rgba(255,255,255,0.65); font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; text-align: center; }
+        .category-group { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+        .category-card {
+            padding: 7px 14px; border: 1px solid var(--border); border-radius: 8px;
+            background: var(--card); color: var(--muted); cursor: pointer;
+            font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 500;
+            transition: all 0.25s ease; white-space: nowrap; backdrop-filter: blur(12px);
+        }
+        .category-card:hover { border-color: rgba(255,255,255,0.2); color: var(--fg); }
+        .category-card.active {
+            border-color: rgba(16,185,129,0.5); background: rgba(16,185,129,0.1);
+            color: var(--accent); box-shadow: 0 0 16px rgba(16,185,129,0.12);
+        }
 
         @media (max-width: 960px) { .main-layout { flex-direction: column; align-items: center; } .right-col { width: 100%; max-width: 650px; flex-direction: row; flex-wrap: wrap; } .score-panel { flex: 1; min-width: 200px; } .history-panel { flex: 2; min-width: 300px; } .history-list { max-height: 160px; } }
         @media (prefers-reduced-motion: reduce) { .floating-orb, .snake-deco span { animation: none; } .canvas-container, .game-btn, .history-item, .diff-btn { transition: none; animation: none; } }
@@ -360,6 +403,15 @@
                         <div class="saved-players-label">已记录玩家</div>
                         <div class="saved-players-list" id="savedPlayersList"><span class="no-saved">暂无记录</span></div>
                     </div>
+                    <div class="category-select">
+                        <div class="category-label">题材选择</div>
+                        <div class="category-group" id="categoryGroup">
+                            <button class="category-card active" data-cat="all">🎯 全部随机</button>
+                            <button class="category-card" data-cat="classic">🏯 墨香诗词阁</button>
+                            <button class="category-card" data-cat="martial">⚔️ 刀光剑影录</button>
+                            <button class="category-card" data-cat="develop">💻 开发者自嘲</button>
+                        </div>
+                    </div>
                     <button class="game-btn btn-primary" id="startBtn">开始游戏</button>
                 </div>
 
@@ -373,18 +425,6 @@
                     </div>
                 </div>
 
-                <!-- 结束画面 -->
-                <div class="overlay hidden" id="gameOverOverlay">
-                    <div class="overlay-title danger">游戏结束</div>
-                    <div class="final-score-text">最终得分</div>
-                    <div class="final-score-number" id="finalScore">0</div>
-                    <div class="final-player" id="finalPlayer"></div>
-                    <div class="new-record hidden" id="newRecord">新纪录</div>
-                    <div class="gameover-btns">
-                        <button class="game-btn btn-secondary" id="exitBtn">退出</button>
-                        <button class="game-btn btn-primary" id="restartBtn">再来一局</button>
-                    </div>
-                </div>
 
                 <!-- 诗句通关弹窗 -->
                 <div class="settlement-overlay hidden" id="settlementOverlay">
@@ -393,6 +433,11 @@
                     <div class="settlement-subtitle">— 集齐五字，诗成通关 —</div>
                     <button class="settlement-btn" id="nextPoemBtn">开 启 下 一 关</button>
                 </div>
+            </div>
+
+            <div class="gameover-actions hidden" id="gameOverActions">
+                <button class="game-btn gameover-action-btn" id="exitBtn">退出</button>
+                <button class="game-btn gameover-action-btn primary" id="restartBtn">再来一局</button>
             </div>
 
             <div class="focus-hint" id="focusHint">点击游戏区域以激活键盘控制</div>
@@ -434,12 +479,18 @@
             </div>
 
             <div class="history-panel">
-                <div class="history-header"><i class="fas fa-trophy"></i><span class="history-title">排行榜</span><span class="history-count" id="historyCount">0 局</span></div>
+                <div class="history-header"><i class="fas fa-trophy"></i><span class="history-title">排行榜</span><span class="history-count" id="historyCount">0 局</span><button class="history-clear-btn" id="clearHistoryBtn" title="清空排行榜"><i class="fas fa-trash-alt"></i></button></div>
                 <div class="history-list" id="historyList"><div class="history-empty"><i class="fas fa-ghost"></i>还没有记录</div></div>
+            </div>
+
+            <div class="gameover-score-card hidden" id="gameOverBar">
+                <div class="gameover-bar-score" id="gameOverBarScore">0 分</div>
+                <div class="new-record hidden" id="newRecord">🏆 新纪录</div>
             </div>
         </div>
     </div>
 
+    <script src="poetry-data.js"></script>
     <script>
     (() => {
         const GRID = 25, CELL = 26, SIZE = GRID * CELL;
@@ -455,28 +506,29 @@
             '金蛇狂舞','银环侠盗','墨蛇书生','青蛇医圣','白蛇仙子',
             '火蛇战魂','风蛇行者','夜蛇刺客','光蛇守护','影蛇术士'
         ];
-        const POETRY_BANK = [
-            { id: 1, type: 'poem', words: ['床','前','明','月','光'], fullText: '床前明月光，疑是地上霜。' },
-            { id: 2, type: 'poem', words: ['锄','禾','日','当','午'], fullText: '锄禾日当午，汗滴禾下土。' },
-            { id: 3, type: 'poem', words: ['春','眠','不','觉','晓'], fullText: '春眠不觉晓，处处闻啼鸟。' }
-        ];
+        const POETRY_BANK = (window.CUSTOM_POETRY_BANK && window.CUSTOM_POETRY_BANK.length)
+            ? window.CUSTOM_POETRY_BANK
+            : [{ id: 0, type: 'poem', words: ['床','前','明','月','光'], fullText: '床前明月光，疑是地上霜。' }];
         let IS_TEST_MODE = new URLSearchParams(window.location.search).has('test');
 
         const $ = id => document.getElementById(id);
         const canvas = $('gameCanvas'), ctx = canvas.getContext('2d');
         const container = $('canvasContainer');
-        const startOv = $('startOverlay'), pauseOv = $('pauseOverlay'), overOv = $('gameOverOverlay');
+        const startOv = $('startOverlay'), pauseOv = $('pauseOverlay');
         const settleOv = $('settlementOverlay'), settlePoemEl = $('settlementPoem'), nextPoemBtn = $('nextPoemBtn');
         const startBtn = $('startBtn'), restartBtn = $('restartBtn'), exitBtn = $('exitBtn');
         const resumeBtn = $('resumeBtn'), quitBtn = $('quitBtn');
         const scoreEl = $('scoreValue'), bestEl = $('bestValue');
-        const finalEl = $('finalScore'), finalPlayer = $('finalPlayer'), newRec = $('newRecord');
+        const newRec = $('newRecord');
+        const gameOverBar = $('gameOverBar'), gameOverBarScore = $('gameOverBarScore');
+        const gameOverActions = $('gameOverActions');
         const toastEl = $('toast'), wrapper = $('gameWrapper'), focusH = $('focusHint');
-        const hList = $('historyList'), hCount = $('historyCount');
+        const hList = $('historyList'), hCount = $('historyCount'), clearHistoryBtn = $('clearHistoryBtn');
         const dBtns = document.querySelectorAll('.diff-btn');
         const nameInput = $('playerNameInput'), randomNameBtn = $('randomNameBtn');
         const confirmNameBtn = $('confirmNameBtn'), savedPlayersList = $('savedPlayersList');
         const currentPlayerName = $('currentPlayerName');
+        const catCards = document.querySelectorAll('.category-card');
         canvas.width = SIZE; canvas.height = SIZE;
 
         let snake = [], food = { x: 0, y: 0 }, dir = { x: 1, y: 0 }, nextDir = { x: 1, y: 0 };
@@ -485,11 +537,18 @@
         let gameHistory = [], round = 0, playerName = '', selectedPlayer = '';
         let savedPlayers = [], edgeCooldown = 0;
         let pauseBtns = [], pauseFocusIdx = 0;
-        let gameOverBtns = [], gameOverFocusIdx = 0;
+        let gameOverFlag = false;
+        let currentFocusBtn = 'retry';
         let currentCollectedWords = [];
         let currentTargetPoetry = null;
+        let currentCategory = 'all';
         function initNextPoetry(excludeId) {
-            const pool = excludeId ? POETRY_BANK.filter(p => p.id !== excludeId) : POETRY_BANK;
+            let pool = (currentCategory && currentCategory !== 'all')
+                ? POETRY_BANK.filter(p => p.category === currentCategory)
+                : POETRY_BANK;
+            if (!pool.length) pool = POETRY_BANK;
+            if (excludeId) pool = pool.filter(p => p.id !== excludeId);
+            if (!pool.length) pool = POETRY_BANK.filter(p => p.id !== excludeId);
             currentTargetPoetry = pool[Math.floor(Math.random() * pool.length)];
             currentCollectedWords = [];
         }
@@ -549,6 +608,13 @@
             });
         }
         nameInput.value = getRandomName();
+        catCards.forEach(card => card.addEventListener('click', e => {
+            e.stopPropagation();
+            catCards.forEach(c => c.classList.remove('active'));
+            card.classList.add('active');
+            currentCategory = card.dataset.cat;
+            showT('题材：' + card.textContent.trim());
+        }));
         randomNameBtn.addEventListener('click', () => { nameInput.value = getRandomName(); selectedPlayer = ''; renderSavedPlayers(); nameInput.focus(); });
         confirmNameBtn.addEventListener('click', () => { const n = nameInput.value.trim(); if (n) { addPlayer(n); selectedPlayer = n; renderSavedPlayers(); showT('已确认玩家：' + n); } });
         nameInput.addEventListener('mousedown', e => e.stopPropagation());
@@ -567,6 +633,20 @@
         dBtns.forEach(b => b.addEventListener('click', e => { e.stopPropagation(); setDiff(b.dataset.diff, true); wrapper.focus(); }));
 
         // 排行榜
+        function deleteHistoryByPlayer(player) {
+            gameHistory = gameHistory.filter(e => e.player !== player);
+            try { localStorage.setItem('snakeHistory3', JSON.stringify(gameHistory)); } catch (e) {}
+            // 重建 round 编号
+            gameHistory.forEach((e, i) => { e.round = i + 1; });
+            round = gameHistory.length;
+            try { localStorage.setItem('snakeRound3', round.toString()); } catch (e) {}
+            // 重算最高分
+            best = 0; gameHistory.forEach(e => { if (e.score > best) best = e.score; });
+            bestEl.textContent = best;
+            try { localStorage.setItem('snakeBest3', best.toString()); } catch (e) {}
+            renderH();
+        }
+
         function renderH() {
             hList.innerHTML = '';
             if (!gameHistory.length) { hList.innerHTML = '<div class="history-empty"><i class="fas fa-ghost"></i>还没有记录</div>'; hCount.textContent = '0 局'; return; }
@@ -579,12 +659,16 @@
                 const el = document.createElement('div');
                 el.className = 'history-item' + (isB ? ' is-best' : '');
                 el.style.animationDelay = i * 0.03 + 's';
-                el.innerHTML = `<div class="item-rank">${rank}</div><div class="item-info"><div class="item-player">${e.player || '未命名'}</div></div><div class="item-score">${e.score}</div><i class="fas fa-crown item-crown ${isB ? '' : 'hidden'}"></i>`;
+                el.innerHTML = `<div class="item-rank">${rank}</div><div class="item-info"><div class="item-player">${e.player || '未命名'}</div></div><div class="item-score">${e.score}</div><i class="fas fa-crown item-crown ${isB ? '' : 'hidden'}"></i><span class="history-del" data-player="${e.player}" title="删除此条">×</span>`;
+                el.querySelector('.history-del').addEventListener('click', ev => { ev.stopPropagation(); ev.preventDefault(); deleteHistoryByPlayer(ev.target.dataset.player); });
                 hList.appendChild(el);
             });
             hCount.textContent = gameHistory.length + ' 局';
         }
-        function addH(s, p) { round++; gameHistory.push({ round, score: s, player: p, time: Date.now() }); if (gameHistory.length > 50) gameHistory = gameHistory.slice(-50); try { localStorage.setItem('snakeHistory3', JSON.stringify(gameHistory)); localStorage.setItem('snakeRound3', round.toString()); } catch (e) {} renderH(); }
+        function addH(s, p) {
+            if (IS_TEST_MODE) { renderH(); return; } // 测试模式不污染真实排行榜
+            round++; gameHistory.push({ round, score: s, player: p, time: Date.now() }); if (gameHistory.length > 50) gameHistory = gameHistory.slice(-50); try { localStorage.setItem('snakeHistory3', JSON.stringify(gameHistory)); localStorage.setItem('snakeRound3', round.toString()); } catch (e) {} renderH();
+        }
 
         // 粒子
         function mkP(x, y, c, n) { for (let i = 0; i < n; i++) { const a = Math.PI * 2 * i / n + Math.random() * 0.5, s = 1.5 + Math.random() * 3; particles.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 1, dec: 0.02 + Math.random() * 0.03, sz: 2 + Math.random() * 3, c }); } }
@@ -646,9 +730,22 @@
 
         function render() {
             ctx.fillStyle = '#111827'; ctx.fillRect(0, 0, SIZE, SIZE); drGrid();
-            if (running || particles.length > 0) {
+            if (running || particles.length > 0 || gameOverFlag) {
                 if (running) { drFood(); drDiffInfo(); }
+                else if (gameOverFlag) { drFood(); }
                 drSnake(); drP(); upP();
+                if (gameOverFlag) {
+                    ctx.save();
+                    ctx.fillStyle = '#ef4444';
+                    ctx.font = 'bold 32px "Space Grotesk", sans-serif';
+                    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+                    ctx.shadowColor = 'rgba(239,68,68,0.5)'; ctx.shadowBlur = 14;
+                    ctx.fillText('游戏结束', SIZE / 2, 28);
+                    ctx.shadowBlur = 0; ctx.fillStyle = '#e8ecf4';
+                    ctx.font = 'bold 20px "Space Grotesk", sans-serif';
+                    ctx.fillText(score + ' 分', SIZE / 2, 66);
+                    ctx.restore();
+                }
             }
             requestAnimationFrame(render);
         }
@@ -664,40 +761,187 @@
             scoreEl.textContent = '0'; speed = DIFF[curDiff].base; spawn();
         }
 
+        // ===== A* 寻路核心 =====
+        function aStar(start, goal, obstacleSet) {
+            const key  = p => p.x + ',' + p.y;
+            const h    = p => Math.abs(p.x - goal.x) + Math.abs(p.y - goal.y);
+            const gMap = new Map(); gMap.set(key(start), 0);
+            const fMap = new Map(); fMap.set(key(start), h(start));
+            const open = new Map(); open.set(key(start), start);
+            const from = new Map();
+            const dirs = [{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}];
+            let iters = 0;
+            const maxIters = IS_TEST_MODE ? 6000 : 2000;
+            while (open.size && iters++ < maxIters) {
+                let ck = null, best = Infinity;
+                for (const [k, v] of open) { const f = fMap.get(k) || Infinity; if (f < best) { best = f; ck = k; } }
+                const cur = open.get(ck);
+                if (cur.x === goal.x && cur.y === goal.y) {
+                    const path = [cur]; let kk = ck;
+                    while (from.has(kk)) { const p = from.get(kk); path.unshift(p); kk = key(p); }
+                    return path;
+                }
+                open.delete(ck);
+                const gCur = gMap.get(ck) || 0;
+                for (const d of dirs) {
+                    const nb = { x: cur.x + d.x, y: cur.y + d.y };
+                    const nk = key(nb);
+                    if (nb.x < 0 || nb.x >= GRID || nb.y < 0 || nb.y >= GRID) continue;
+                    if (obstacleSet.has(nk) && !(nb.x === goal.x && nb.y === goal.y)) continue;
+                    const tg = gCur + 1;
+                    if (gMap.has(nk) && tg >= (gMap.get(nk) || Infinity)) continue;
+                    gMap.set(nk, tg); fMap.set(nk, tg + h(nb)); from.set(nk, cur);
+                    if (!open.has(nk)) open.set(nk, nb);
+                }
+            }
+            return null;
+        }
+
+        // ===== 洪水填充：计算从起点可达的空格数量 =====
+        function floodFill(start, obstacleSet) {
+            const visited = new Set(), queue = [start];
+            let count = 0;
+            while (queue.length) {
+                const p = queue.shift(), k = p.x + ',' + p.y;
+                if (visited.has(k) || p.x < 0 || p.x >= GRID || p.y < 0 || p.y >= GRID) continue;
+                if (obstacleSet.has(k)) continue;
+                visited.add(k); count++;
+                queue.push({x:p.x+1,y:p.y},{x:p.x-1,y:p.y},{x:p.x,y:p.y+1},{x:p.x,y:p.y-1});
+            }
+            return count;
+        }
+
+        // ===== 构建障碍集（蛇身去掉尾巴，因为尾巴会移动）=====
+        function buildObstacleSet(snk, excludeTail) {
+            const body = excludeTail ? snk.slice(0, -1) : snk;
+            return new Set(body.map(s => s.x + ',' + s.y));
+        }
+
+        // ===== 虚拟模拟：沿路径走到食物吃掉后的蛇身 =====
+        function simulateEat(pathToFood) {
+            if (!pathToFood || pathToFood.length < 2) return null;
+            // 沿路径模拟蛇的移动（每步头进尾出），最后一步吃食物（头进尾不出，蛇身+1）
+            let sim = snake.map(s => ({...s}));
+            for (let i = 1; i < pathToFood.length; i++) {
+                const step = pathToFood[i];
+                const isLast = (i === pathToFood.length - 1);
+                sim.unshift({ x: step.x, y: step.y });
+                if (!isLast) sim.pop();
+            }
+            return sim;
+        }
+
+        // ===== 2.1 完全体寻路大脑 =====
         function autoFindPath() {
-            const h = snake[0];
-            if (food.x > h.x && dir.x !== -1) { nextDir = { x: 1, y: 0 }; return; }
-            if (food.x < h.x && dir.x !== 1)  { nextDir = { x: -1, y: 0 }; return; }
-            if (food.y > h.y && dir.y !== -1) { nextDir = { x: 0, y: 1 }; return; }
-            if (food.y < h.y && dir.y !== 1)  { nextDir = { x: 0, y: -1 }; return; }
+            const head = snake[0];
+            const opp  = { x: -dir.x, y: -dir.y };
+            const dirs = [{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}];
+
+            // --- Phase 1: 尝试去食物 ---
+            const obsToFood = buildObstacleSet(snake, true);
+            const pathToFood = aStar(head, food, obsToFood);
+
+            if (pathToFood && pathToFood.length >= 2) {
+                const futureSnake = simulateEat(pathToFood);
+                if (futureSnake) {
+                    const futureHead  = futureSnake[0];
+                    const futureTail  = futureSnake[futureSnake.length - 1];
+                    const obsFuture   = buildObstacleSet(futureSnake, true);
+                    const pathToTail  = aStar(futureHead, futureTail, obsFuture);
+                    if (pathToTail) {
+                        // 安全！向食物迈出第一步
+                        nextDir = { x: pathToFood[1].x - head.x, y: pathToFood[1].y - head.y };
+                        return;
+                    }
+                }
+            }
+
+            // --- Phase 2: 食物不安全，Space-Aware 游走 ---
+            // 对所有安全方向做洪水填充评分，优先选空间大且远离尾巴的
+            const tail     = snake[snake.length - 1];
+            const obsTail  = buildObstacleSet(snake, true);
+            const distHT = Math.abs(head.x - tail.x) + Math.abs(head.y - tail.y);
+            if (snake.length < 10 || distHT <= 2) {
+                [[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx,dy]) => {
+                    const nx = tail.x + dx, ny = tail.y + dy;
+                    if (nx >= 0 && nx < GRID && ny >= 0 && ny < GRID) obsTail.add(nx + ',' + ny);
+                });
+            }
+            const wanderScored = [];
+            for (const d of dirs) {
+                if (d.x === opp.x && d.y === opp.y) continue;
+                const nh = { x: head.x + d.x, y: head.y + d.y };
+                if (nh.x < 0 || nh.x >= GRID || nh.y < 0 || nh.y >= GRID) continue;
+                if (obsTail.has(nh.x + ',' + nh.y)) continue;
+                const futureSnake = [nh, ...snake.slice(0, -1)];
+                const obsSet = new Set(futureSnake.map(s => s.x + ',' + s.y));
+                obsSet.delete(nh.x + ',' + nh.y);
+                const space = floodFill(nh, obsSet);
+                // 加分：距离尾巴越远越不容易缠住
+                const distToTail = Math.abs(nh.x - tail.x) + Math.abs(nh.y - tail.y);
+                wanderScored.push({ d, score: space + distToTail * 2 });
+            }
+            if (wanderScored.length) {
+                wanderScored.sort((a, b) => b.score - a.score);
+                nextDir = wanderScored[0].d;
+                return;
+            }
+
+            // --- Phase 3: 兜底 · 邻域空格最大化 ---
+            // 洪水填充计算每个候选方向的真实可达空间，选最大的走
+            const bodySet = buildObstacleSet(snake, true);
+            const scored = [];
+            for (const d of dirs) {
+                if (d.x === opp.x && d.y === opp.y) continue;
+                const nh = { x: head.x + d.x, y: head.y + d.y };
+                if (nh.x < 0 || nh.x >= GRID || nh.y < 0 || nh.y >= GRID) continue;
+                if (bodySet.has(nh.x + ',' + nh.y)) continue;
+                // 模拟移动后的蛇身（nh 是起点，不在障碍内）
+                const futureSnake = [nh, ...snake.slice(0, -1)];
+                const obsSet = new Set(futureSnake.map(s => s.x + ',' + s.y));
+                obsSet.delete(nh.x + ',' + nh.y);
+                const space = floodFill(nh, obsSet);
+                scored.push({ d, space });
+            }
+            if (scored.length) {
+                scored.sort((a, b) => b.space - a.space);
+                nextDir = scored[0].d;
+            }
         }
 
         function restartLoop() { clearInterval(loop); loop = setInterval(step, IS_TEST_MODE ? Math.max(15, Math.floor(speed / 8)) : speed); }
 
         function step() {
-            if (!running || paused) return;
-            if (IS_TEST_MODE) autoFindPath();
-            dir = { ...nextDir };
-            const h = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
-            if (h.x < 0 || h.x >= GRID || h.y < 0 || h.y >= GRID) { gameOver(); return; }
-            if (onSnake(h)) { gameOver(); return; }
-            snake.unshift(h);
-            if (h.x === food.x && h.y === food.y) {
-                const c = DIFF[curDiff]; score += c.pts; eaten++;
-                scoreEl.textContent = score; scoreEl.classList.add('bump');
-                setTimeout(() => scoreEl.classList.remove('bump'), 150);
-                if (food.text) { currentCollectedWords.push(food.text); updateWordSlotsUI(); }
-                if (currentCollectedWords.length === 5) { settlePoem(); return; }
-                mkP(food.x * CELL + CELL / 2, food.y * CELL + CELL / 2, '#f59e0b', 12);
-                mkP(food.x * CELL + CELL / 2, food.y * CELL + CELL / 2, '#fbbf24', 8);
-                speed = Math.max(c.min, c.base - eaten * c.step);
-                restartLoop(); spawn();
-            } else { snake.pop(); }
+            const turbo = IS_TEST_MODE ? 8 : 1;
+            for (let t = 0; t < turbo; t++) {
+                if (!running || paused) break;
+                if (IS_TEST_MODE) autoFindPath();
+                dir = { ...nextDir };
+                const h = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
+                if (h.x < 0 || h.x >= GRID || h.y < 0 || h.y >= GRID) { gameOver(); break; }
+                const willEat = (h.x === food.x && h.y === food.y);
+                if (onSnake(h)) {
+                    const t = snake[snake.length - 1];
+                    if (!(h.x === t.x && h.y === t.y && !willEat)) { gameOver(); break; }
+                }
+                snake.unshift(h);
+                if (willEat) {
+                    const c = DIFF[curDiff]; score += c.pts; eaten++;
+                    scoreEl.textContent = score; scoreEl.classList.add('bump');
+                    setTimeout(() => scoreEl.classList.remove('bump'), 150);
+                    if (food.text) { currentCollectedWords.push(food.text); updateWordSlotsUI(); }
+                    if (currentCollectedWords.length === 5) { settlePoem(); break; }
+                    mkP(food.x * CELL + CELL / 2, food.y * CELL + CELL / 2, '#f59e0b', 12);
+                    mkP(food.x * CELL + CELL / 2, food.y * CELL + CELL / 2, '#fbbf24', 8);
+                    speed = Math.max(c.min, c.base - eaten * c.step);
+                    restartLoop(); spawn(); break;
+                } else { snake.pop(); }
+            }
         }
 
         // 结算（通用：死亡或退出都会调用）
         function finishGame(showDeathFx) {
-            running = false; clearInterval(loop);
+            running = false; gameOverFlag = true; IS_TEST_MODE = false; clearInterval(loop);
             container.classList.remove('active'); container.classList.add('dead');
             if (showDeathFx) {
                 mkP(snake[0].x * CELL + CELL / 2, snake[0].y * CELL + CELL / 2, '#ef4444', 20);
@@ -706,14 +950,13 @@
             addH(score, playerName);
             let isNew = false;
             if (score > best) { best = score; try { localStorage.setItem('snakeBest3', best.toString()); } catch (e) {} bestEl.textContent = best; isNew = true; }
-            setTimeout(() => {
-                finalEl.textContent = score; finalPlayer.textContent = '玩家：' + playerName;
-                if (isNew && score > 0) newRec.classList.remove('hidden'); else newRec.classList.add('hidden');
-                overOv.classList.remove('hidden');
-                gameOverBtns = [exitBtn, restartBtn];
-                gameOverFocusIdx = 0;
-                updateGameOverFocus();
-            }, showDeathFx ? 600 : 200);
+            if (isNew && score > 0) newRec.classList.remove('hidden'); else newRec.classList.add('hidden');
+            gameOverBarScore.textContent = score + ' 分';
+            gameOverBar.classList.remove('hidden');
+            gameOverActions.classList.remove('hidden');
+            currentFocusBtn = 'retry';
+            updateGameOverBtnFocus();
+            wrapper.focus();
         }
 
         function gameOver() { finishGame(true); }
@@ -730,17 +973,17 @@
             playerName = n || getRandomName(); nameInput.value = playerName;
             addPlayer(playerName); selectedPlayer = playerName; renderSavedPlayers();
             currentPlayerName.textContent = playerName;
-            init(); startOv.classList.add('hidden'); overOv.classList.add('hidden'); pauseOv.classList.add('hidden');
+            init(); startOv.classList.add('hidden'); pauseOv.classList.add('hidden');
+            gameOverBar.classList.add('hidden'); gameOverActions.classList.add('hidden'); gameOverFlag = false;
             container.classList.remove('dead'); container.classList.add('active');
             running = true; paused = false; focusH.classList.add('hidden');
             restartLoop(); wrapper.focus();
         }
 
         function exitToStart() {
-            running = false; paused = false; clearInterval(loop);
-            gameOverBtns.forEach(b => b.classList.remove('menu-focused'));
+            running = false; paused = false; gameOverFlag = false; clearInterval(loop);
             container.classList.remove('active', 'dead');
-            overOv.classList.add('hidden'); pauseOv.classList.add('hidden');
+            gameOverBar.classList.add('hidden'); gameOverActions.classList.add('hidden'); pauseOv.classList.add('hidden');
             startOv.classList.remove('hidden');
             scoreEl.textContent = '0';
             nameInput.value = playerName || getRandomName(); selectedPlayer = playerName; renderSavedPlayers();
@@ -794,11 +1037,11 @@
             });
         }
 
-        function updateGameOverFocus() {
-            gameOverBtns.forEach((btn, i) => {
-                if (i === gameOverFocusIdx) btn.classList.add('menu-focused');
-                else btn.classList.remove('menu-focused');
-            });
+        function updateGameOverBtnFocus() {
+            exitBtn.style.border = currentFocusBtn === 'exit' ? '2px solid #fff' : '';
+            exitBtn.style.boxShadow = currentFocusBtn === 'exit' ? '0 0 16px rgba(255,255,255,0.3)' : '';
+            restartBtn.style.border = currentFocusBtn === 'retry' ? '2px solid #fff' : '';
+            restartBtn.style.boxShadow = currentFocusBtn === 'retry' ? '0 0 16px rgba(255,255,255,0.3)' : '';
         }
 
         function toggleP() {
@@ -840,10 +1083,10 @@
             if (!settleOv.classList.contains('hidden')) {
                 if (e.key === 'Enter') { e.preventDefault(); nextPoem(); return; }
             }
-            if (IS_TEST_MODE) return;
+            if (IS_TEST_MODE && !gameOverFlag) return;
             if (document.activeElement === nameInput && e.key !== 'Enter') return;
             const dm = { 'ArrowUp': 'up', 'ArrowDown': 'down', 'ArrowLeft': 'left', 'ArrowRight': 'right', 'w': 'up', 's': 'down', 'a': 'left', 'd': 'right', 'W': 'up', 'S': 'down', 'A': 'left', 'D': 'right' };
-            if (e.key === ' ') { e.preventDefault(); if (running) toggleP(); else if (!startOv.classList.contains('hidden')) startGame(); return; }
+            if (e.key === ' ') { e.preventDefault(); if (running) { toggleP(); return; } if (!startOv.classList.contains('hidden')) { startGame(); return; } if (!gameOverFlag) return; }
             if (e.key === '1') { setDiff('easy', true); return; }
             if (e.key === '2') { setDiff('normal', true); return; }
             if (e.key === '3') { setDiff('hard', true); return; }
@@ -862,16 +1105,17 @@
                 }
             }
             // 游戏结束菜单导航
-            if (!running && !overOv.classList.contains('hidden')) {
+            if (!running && gameOverFlag) {
                 if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
                     e.preventDefault();
-                    gameOverFocusIdx = (gameOverFocusIdx + (e.key === 'ArrowLeft' ? -1 : 1) + gameOverBtns.length) % gameOverBtns.length;
-                    updateGameOverFocus();
+                    currentFocusBtn = (currentFocusBtn === 'retry') ? 'exit' : 'retry';
+                    updateGameOverBtnFocus();
                     return;
                 }
-                if (e.key === 'Enter') {
+                if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
-                    gameOverBtns[gameOverFocusIdx].click();
+                    if (currentFocusBtn === 'exit') exitToStart();
+                    else startGame();
                     return;
                 }
             }
@@ -889,6 +1133,15 @@
         resumeBtn.addEventListener('click', e => { e.stopPropagation(); toggleP(); wrapper.focus(); });
         quitBtn.addEventListener('click', e => { e.stopPropagation(); quitGame(); });
         nextPoemBtn.addEventListener('click', e => { e.stopPropagation(); nextPoem(); });
+        clearHistoryBtn.addEventListener('click', e => {
+            e.stopPropagation();
+            localStorage.removeItem('snakeHistory3');
+            localStorage.removeItem('snakeRound3');
+            gameHistory = []; round = 0; best = 0;
+            bestEl.textContent = '0';
+            try { localStorage.setItem('snakeBest3', '0'); } catch (ex) {}
+            renderH(); showT('排行榜已清空');
+        });
 
         let tx = 0, ty = 0;
         canvas.addEventListener('touchstart', e => { tx = e.touches[0].clientX; ty = e.touches[0].clientY; }, { passive: true });
